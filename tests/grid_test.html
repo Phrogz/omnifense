@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<html lang="en"> 
+<head> 
+	<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"> 
+	<title>Hexagonal Grid Test</title> 
+	<style type="text/css" media="screen">
+		body { background:#f3e }
+		#grid { margin:0 auto; width:800px; position:relative }
+		#grid canvas { border:1px solid #999 }
+		#highlight { position:absolute; left:48px; top:111px; display:none }
+	</style>
+	<script type="text/javascript">
+		onload = function(){
+			grid = document.getElementById('grid');
+			cnv  = grid.getElementsByTagName('canvas')[0];
+			ctx  = cnv.getContext('2d');
+			bg = new Image; bg.src='hexgrid.png';
+			highlight = document.getElementById('highlight');
+			clearPath();
+			updateGrid();
+			grid.onmousemove=function(e){
+				var xSnap = 24;
+				var ySnap = 27.71;
+				var pointer = { x:e.clientX - grid.offsetLeft, y:e.clientY - grid.offsetTop };
+				var column = Math.round(pointer.x/xSnap);
+				var snapped = {	x:column*xSnap };
+				var yOffset = (column%2 == 1) ? (ySnap/2) : 0;
+				snapped.y   = Math.round((pointer.y-yOffset)/ySnap)*ySnap+yOffset;
+				if (pointer.x<0 || pointer.x>800 || pointer.y<0 || pointer.y>600) snapped=null;
+				updateGrid(snapped);
+				// highlight.style.left = ( snapped.x - HEX_WIDTH/2 + 1)  + 'px';
+				// highlight.style.top  = ( snapped.y - HEX_HEIGHT/2 + 1) + 'px';
+			};
+		}
+		HEX_WIDTH   = 32;
+		HEX_HEIGHT  = 27.71;
+		function clearPath(){ path=[]; }
+		function updateGrid(snapped){
+			ctx.clearRect(0,0,800,600);
+			if (snapped) path.push( snapped );
+			for ( var i=path.length-1; i>=0; --i ) ctx.drawImage( highlight, path[i].x-HEX_WIDTH/2+1, path[i].y-HEX_HEIGHT/2+1 );
+			ctx.drawImage( bg, 0, 0 );
+			console.log(path.length);
+		}
+		
+	</script> 
+</head> 
+<body>
+<div id="grid">
+	<canvas width="800" height="600"></canvas>
+	<img id="highlight" src="highlight.png">
+</div>
+</body></html>
