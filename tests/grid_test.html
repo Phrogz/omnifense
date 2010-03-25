@@ -16,9 +16,13 @@
 		CEL_OFFSET = 24;
 		CEL_HEIGHT = 48;
 		
-		// Board
+		// Canvas
 		WIDTH      = 1024;
 		HEIGHT     = 768;
+		
+		// MN grid coordinates
+		MAX_M      = 22;
+		MAX_N      = 15;
 
 		// Graphic size
 		HEX_WIDTH  = 55;
@@ -33,55 +37,169 @@
 		green  = new Image; green.src ='../img/green.png';
 		red    = new Image; red.src   ='../img/red.png';
 
+		function Cell(a,b,c){
+			a += c||0;
+			b -= c||0;
+			this.a = a;
+			this.b = b;
+			this.c = 0;
+			this.mn = { m:a, n:b+Math.ceil(a/2) };
+			this.xy = {
+				x:COL_OFFSET+(a+1)*COL_WIDTH,
+				y:CEL_OFFSET+(a+2*b+1)*CEL_HEIGHT/2
+			};
+		}
+		Cell.prototype.offset = function(a,b,c){
+			return new Cell( this.a+a, this.b+b, c );
+		}
+		Cell.prototype.sameAs = function(otherCell){
+			return this.a==otherCell.a && this.b==otherCell.b;
+		}
+		Cell.prototype.toString = function(){
+			return "<ab:"+this.a+","+this.b+"; mn:"+this.mn.m+","+this.mn.n+">"
+		}
+		
+		Cell.fromXY = function(x,y){
+			var a = Math.round( ( x - COL_OFFSET - COL_WIDTH ) / COL_WIDTH );
+			var b = Math.round( ( y - CEL_OFFSET - (a+1)*CEL_HEIGHT/2 ) / CEL_HEIGHT );
+			return new Cell(a,b);
+		}
+		Cell.fromMN = function(m,n){
+			return new Cell( m, n-Math.ceil(m/2) );
+		}
+		
+		
+		function Board(maxM,maxN){
+			this.maxM = maxM;
+			this.maxN = maxN;
+			this.holes = [];
+			for (var m=0;m<=this.maxM;++m) this.holes[m] = [];
+		};
+		Board.prototype.inBounds = function(cell){
+			var m=cell.mn.m, n=cell.mn.n;
+			return m>=0 && m<=this.maxM && n>=0 && n<=(this.maxN-(m%2==0 ? 1 : 0));
+		}
+		Board.prototype.shortestPath = function(a,b){
+			var distance = [];
+			var previous = [];
+			for (var m=0;m<=this.maxM;++m){
+				distance[m]=[];
+				previous[m]=[];
+			}
+			distance[a.mn.m] = [];
+			distance[b.mn.m] = [];
+			distance[a.mn.m][a.mn.n] = 0;
+			a.__distance = 0;
+			var cellsByDistance = [a];
+			var spot;
+			while (cell=cellsByDistance.shift()){
+				if (cell.sameAs($finish)){
+					var path = [];
+					while (cell.__previous){
+						path.unshift( cell );
+						cell = cell.__previous;
+					}
+					return path;
+				}else{
+					var neighbors = [
+						cell.offset(1,0,0),
+						cell.offset(-1,0,0),
+						cell.offset(0,1,0),
+						cell.offset(0,-1,0),
+						cell.offset(0,0,1),
+						cell.offset(0,0,-1)
+					];
+					for (var i=0;i<6;++i){
+						var neighbor = neighbors[i];
+						var mn = neighbor.mn;
+						if (this.holes[mn.m] && this.holes[mn.m][mn.n]) continue;
+						if (neighbor.sameAs($finish) || this.inBounds(neighbor)){
+							var alt = cell.__distance + 1;
+							var existing_distance = distance[mn.m][mn.n];
+							if (!existing_distance || alt<existing_distance){
+								neighbor.__distance = distance[mn.m][mn.n] = alt;
+								var indexToInsert=0,tmp;
+								while ((tmp=cellsByDistance[indexToInsert]) && tmp.__distance<alt ) indexToInsert++;
+								cellsByDistance.splice(indexToInsert,0,neighbor);
+								neighbor.__previous = cell;
+							}
+						}
+					}
+				}
+			}
+			return false;
+		}
+		
 		onload = function(){
 			grid = document.getElementById('grid');
 			cnv  = grid.getElementsByTagName('canvas')[0];
 			ctx  = cnv.getContext('2d');
 			grid.onmousemove=handleMove;
 			clearPath();
-			for (var i=0;i<9;++i) path.push({a:i,b:0,c:0});
-			for (var i=0;i<5;++i) path.push({a:9,b:i,c:0});
-			for (var i=0;i<7;++i) path.push({a:9,b:5,c:-i});
+
+			$start  = new Cell( -1, 5 );
+			$start  = Cell.fromMN( Math.random()*MAX_M<<0, Math.random()*MAX_N-1<<0 );
+			$start.color = green;
+			$finish = new Cell( 23, -10);
+			$finish  = Cell.fromMN( Math.random()*MAX_M<<0, Math.random()*MAX_N-1<<0 );
+			$finish.color = red;
+
+			// A lovely river (testing a,b,c coordinates)
+			for (var i=0;i<9;++i) path.push(new Cell(i,0,0));
+			for (var i=0;i<5;++i) path.push(new Cell(9,i,0));
+			for (var i=0;i<7;++i) path.push(new Cell(9,5,-i));
+
+			path.push($start);
+			path.push($finish);
+
+			$board = new Board( MAX_M, MAX_N );
+			
+			// Fill the board with random holes
+			for (var i=0;i<150;i++){
+				var m=Math.floor( Math.random()*MAX_M );
+				var n=Math.floor( Math.random()*MAX_N );
+				hole = Cell.fromMN(m,n);
+				if (hole.sameAs($start) || hole.sameAs($finish)) continue;
+				hole.color = black;
+				$board.holes[m][n] = true;
+				path.push(hole);
+			}
+			
+			// Calculate the shortest path, if possible
+			var shortest = $board.shortestPath($start,$finish);
+			if (shortest){
+				// Don't draw over the $finish, which is in the path
+				for (var i=0,len=shortest.length-1;i<len;++i){
+					shortest[i].color = orange;
+					path.push(shortest[i]);
+				};
+			}
 			updateGrid();
 		}
 		
 		function handleMove(e){
-			var snapped;
-			var pointer = { x:e.clientX - grid.offsetLeft, y:e.clientY - grid.offsetTop };
-			if (pointer.x>=0 && pointer.x<=WIDTH && pointer.y>=0 && pointer.y<=HEIGHT){
-				snapped = xy2abc( pointer );
-			}
-			updateGrid(snapped);
+			var nearest = Cell.fromXY(
+				e.clientX - grid.offsetLeft,
+				e.clientY - grid.offsetTop
+			);
+			nearest.color = yellow;
+			if (!$board.inBounds(nearest)) nearest=null;
+			updateGrid(nearest);
 		};
 		
-		function abc2xy(abc){
-			var x=COL_OFFSET+(abc.a+abc.c+1)*COL_WIDTH;
-			var y=CEL_OFFSET+(abc.a+2*abc.b-abc.c+1)*CEL_HEIGHT/2;
-			return {x:x,y:y};
-		}
-		function xy2abc(xy){
-			var a = Math.round( ( xy.x - COL_OFFSET - COL_WIDTH ) / COL_WIDTH );
-			var b = Math.round( ( xy.y - CEL_OFFSET - (a+1)*CEL_HEIGHT/2 ) / CEL_HEIGHT );
-			return {a:a,b:b,c:0};
-		}
-		
+		last=null;
 		function clearPath(){ path=[]; }
 		function updateGrid(point){
 			// Don't update if snapping to the same cell
-			if (point && last && last.a==point.a && last.b==point.b && last.c==point.c) return;
-			if (point){
-				point.color = yellow;
-				path.push( point );
-			} 
+			if (point && last && last.a==point.a && last.b==point.b) return;
+			if (point) path.push( point );
 			last=point;
 
 			ctx.clearRect(0,0,1024,768);
 			ctx.drawImage( border, 0, 0 );
-			for ( var i=path.length-1; i>=0; --i ){
-				var point = path[i];
-				var xy    = abc2xy(point);
-				var color = point.color || blue;
-				ctx.drawImage( color, xy.x-HEX_WIDTH/2-1, xy.y-HEX_HEIGHT/2-0.5 );
+			for ( var i=0,len=path.length; i<len; ++i ){
+				var cell = path[i];
+				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-1, cell.xy.y-HEX_HEIGHT/2-0.5 );
 			} 
 			ctx.drawImage( bg, 0, 0 );
 		}
