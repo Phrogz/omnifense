@@ -38,17 +38,16 @@
 		green  = new Image; green.src ='../img/green.png';
 		red    = new Image; red.src   ='../img/red.png';
 
-		function Cell(a,b,c){
+		function Cell(a,b,c,m,n,x,y){
 			a += c||0;
 			b -= c||0;
 			this.a = a;
 			this.b = b;
 			this.c = 0;
-			this.mn = { m:a, n:b+Math.ceil(a/2) };
-			this.xy = {
-				x:COL_OFFSET+(a+1)*COL_WIDTH,
-				y:CEL_OFFSET+(a+2*b+1)*CEL_HEIGHT/2
-			};
+			this.m = m!=null ? m : a;
+			this.n = n!=null ? n : b+Math.ceil(a/2);
+			this.x = x!=null ? x : COL_OFFSET+(a+1)*COL_WIDTH;
+			this.y = y!=null ? y : CEL_OFFSET+(a+2*b+1)*CEL_HEIGHT/2;
 		}
 		Cell.prototype.offset = function(a,b,c){
 			return new Cell( this.a+a, this.b+b, c );
@@ -57,16 +56,16 @@
 			return this.a==otherCell.a && this.b==otherCell.b;
 		}
 		Cell.prototype.toString = function(){
-			return "<ab:"+this.a+","+this.b+"; mn:"+this.mn.m+","+this.mn.n+">"
+			return "<ab:"+this.a+","+this.b+"; mn:"+this.m+","+this.n+">"
 		}
 		
 		Cell.fromXY = function(x,y){
 			var a = Math.round( ( x - COL_OFFSET - COL_WIDTH ) / COL_WIDTH );
 			var b = Math.round( ( y - CEL_OFFSET - (a+1)*CEL_HEIGHT/2 ) / CEL_HEIGHT );
-			return new Cell(a,b);
+			return new Cell(a,b,0,null,null,x,y);
 		}
 		Cell.fromMN = function(m,n){
-			return new Cell( m, n-Math.ceil(m/2) );
+			return new Cell( m, n-Math.ceil(m/2), 0, m, n );
 		}
 		
 		
@@ -77,7 +76,7 @@
 			for (var m=0;m<=this.maxM;++m) this.holes[m] = [];
 		};
 		Board.prototype.inBounds = function(cell){
-			var m=cell.mn.m, n=cell.mn.n;
+			var m=cell.m, n=cell.n;
 			return m>=0 && m<=this.maxM && n>=0 && n<=(this.maxN-(m%2==0 ? 1 : 0));
 		}
 		Board.prototype.shortestPath = function(a,b){
@@ -87,9 +86,9 @@
 				distance[m]=[];
 				previous[m]=[];
 			}
-			distance[a.mn.m] = [];
-			distance[b.mn.m] = [];
-			distance[a.mn.m][a.mn.n] = 0;
+			distance[a.m] = [];
+			distance[b.m] = [];
+			distance[a.m][a.n] = 0;
 			a.__distance = 0;
 			var cellsByDistance = [a];
 			var spot;
@@ -112,13 +111,13 @@
 					];
 					for (var i=0;i<6;++i){
 						var neighbor = neighbors[i];
-						var mn = neighbor.mn;
-						if (this.holes[mn.m] && this.holes[mn.m][mn.n]) continue;
+						var m = neighbor.m, n=neighbor.n;
+						if (this.holes[m] && this.holes[m][n]) continue;
 						if (neighbor.sameAs(b) || this.inBounds(neighbor)){
 							var alt = cell.__distance + 1;
-							var existing_distance = distance[mn.m][mn.n];
+							var existing_distance = distance[m][n];
 							if (!existing_distance || alt<existing_distance){
-								neighbor.__distance = distance[mn.m][mn.n] = alt;
+								neighbor.__distance = distance[m][n] = alt;
 								var indexToInsert=0,tmp;
 								while ((tmp=cellsByDistance[indexToInsert]) && tmp.__distance<alt ) indexToInsert++;
 								cellsByDistance.splice(indexToInsert,0,neighbor);
@@ -207,11 +206,11 @@
 			ctx.drawImage(border,0,0);
 			for ( var i=0,len=$board.features.length; i<len; ++i ){
 				var cell = $board.features[i];
-				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-.5, cell.xy.y-HEX_HEIGHT/2 );
+				ctx.drawImage( cell.color || blue, cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
 			}
 			for ( var i=0,len=$board.path.length; i<len; ++i ){
 				var cell = $board.path[i];
-				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-.5, cell.xy.y-HEX_HEIGHT/2 );
+				ctx.drawImage( cell.color || blue, cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
 			} 
 			ctx.drawImage( wires, 0, 0 );
 		}
