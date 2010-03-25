@@ -6,9 +6,8 @@
 	<style type="text/css" media="screen">
 		body { background:#eee }
 		#grid { margin:0 auto; width:1024px; position:relative }
-		#grid canvas { border:1px solid #999; background:#fff; }
-		#highlight { position:absolute; left:48px; top:111px; display:none }
-		#output { position:absolute; top:1px; right:1px; padding:0.1em 0.5em; text-align:right; background:rgba(255, 255, 255, .8); }
+		#grid canvas { border:2px solid #333; background:#fff; }
+		#output { position:absolute; top:1px; right:0px; padding:0.1em 0.5em; text-align:right; background:rgba(255, 255, 255, .8); }
 	</style>
 	<script type="text/javascript">
 		// Hex Grid
@@ -38,17 +37,42 @@
 		green  = new Image; green.src ='../img/green.png';
 		red    = new Image; red.src   ='../img/red.png';
 
-		function Cell(a,b,c,m,n,x,y){
-			a += c||0;
-			b -= c||0;
+		function Cell(a,b,c,n){
+			var nCache=Cell.n, xCache=Cell.x, yCache=Cell.y;
+			if (c){ a+=c; b-=c }
 			this.a = a;
 			this.b = b;
-			this.c = 0;
-			this.m = m!=null ? m : a;
-			this.n = n!=null ? n : b+Math.ceil(a/2);
-			this.x = x!=null ? x : COL_OFFSET+(a+1)*COL_WIDTH;
-			this.y = y!=null ? y : CEL_OFFSET+(a+2*b+1)*CEL_HEIGHT/2;
+			this.m = a;
+			if (n!=null){
+				this.n = nCache[a][b] = n;
+			}else{
+				if (!nCache[a]) nCache[a]={};
+				this.n = (nCache[a][b]==null) ? (nCache[a][b]=b+Math.ceil(a/2)) : nCache[a][b];
+			}
+			if (xCache[a]==null){
+				this.x = xCache[a] = COL_OFFSET+(a+1)*COL_WIDTH;
+			}else{
+				this.x = xCache[a];
+			}
+			if (!yCache[a]) yCache[a]={};
+			if (yCache[a][b]==null){
+				this.y = yCache[a][b] = CEL_OFFSET+(a+2*b+1)*CEL_HEIGHT/2;
+			}else{
+				this.y = yCache[a][b];
+			}
 		}
+		
+		// Premature optimization: cache values
+		Cell.b = {}; //indexed by [m][n]
+		Cell.n = {}; //indexed by [a][b]
+		Cell.x = {}; //indexed by [a]
+		Cell.y = {}; //indexed by [a][b]
+		for(var a=0;a<=MAX_M;++a){
+			Cell.b[a]={};	
+			Cell.n[a]={};	
+			Cell.y[a]={};
+		}
+		
 		Cell.prototype.offset = function(a,b,c){
 			return new Cell( this.a+a, this.b+b, c );
 		}
@@ -62,10 +86,11 @@
 		Cell.fromXY = function(x,y){
 			var a = Math.round( ( x - COL_OFFSET - COL_WIDTH ) / COL_WIDTH );
 			var b = Math.round( ( y - CEL_OFFSET - (a+1)*CEL_HEIGHT/2 ) / CEL_HEIGHT );
-			return new Cell(a,b,0,null,null,x,y);
+			return new Cell(a,b);
 		}
 		Cell.fromMN = function(m,n){
-			return new Cell( m, n-Math.ceil(m/2), 0, m, n );
+			var b = Cell.b[m][n]==null ? (Cell.b[m][n]=n-Math.ceil(m/2)) : Cell.b[m][n];
+			return new Cell( m, b, 0, n );
 		}
 		
 		
