@@ -38,38 +38,39 @@
 		}
 		
 		onload = function(){
+			$('#defense,#offense').mousedown(function(){
+				$board.path=[];
+				$board.mode=this.id;
+				$board.redraw();
+			});
+
 			$board = new Board( MAX_M, MAX_N, $('canvas')[0], $tiles );
-
-			$start  = (new Cell( -1, 5 )).useTile('green');
-			$board.features.push($start);
-
-			$finish = (new Cell( 23, -10)).useTile('red');
-			$board.features.push($finish);
+			$board.start  = (new Cell( -1, 5 )).useTile('green');
+			$board.finish = (new Cell( 23, -10)).useTile('red');
 
 			// Fill the board with random holes
-			for (var i=0;i<50;i++){
-				var m=Math.floor( Math.random()*MAX_M );
-				var n=Math.floor( Math.random()*MAX_N );
-				var hole = Cell.fromMN(m,n).useTile('black');
-				if (hole.sameAs($start) || hole.sameAs($finish)) continue;
-				$board.holes[m][n] = true;
-				$board.features.push(hole);
-			}
+			// for (var i=0;i<50;i++){
+			// 	var m=Math.floor( Math.random()*MAX_M );
+			// 	var n=Math.floor( Math.random()*MAX_N );
+			// 	var hole = Cell.fromMN(m,n);
+			// 	$board.placeHole(hole);
+			// }
 
-			$lastCell = null;
+			var lastCell = null;
 			$('#grid').mousemove(function(e){
+				if ($board.mode=='defense') return;
 				var cell = Cell.fromXY(
 					e.clientX - this.offsetLeft,
 					e.clientY - this.offsetTop
 				);
 				
 				if ($board.inBounds(cell)){
-					if (!$lastCell || !$lastCell.sameAs(cell)){
-						$lastCell = cell;
+					if (!lastCell || !lastCell.sameAs(cell)){
+						lastCell = cell;
 						$board.path = [];
 						var p1,p2;
-						if (p1 = $board.shortestPath($start,cell)){
-							if (p2 = $board.shortestPath(cell,$finish)){
+						if (p1 = $board.shortestPath($board.start,cell)){
+							if (p2 = $board.shortestPath(cell,$board.finish)){
 								for (var i=0,len=p1.length-1;i<len;++i){
 									p1[i].tile='lightyellow';
 									$board.path[i]=p1[i];
@@ -87,7 +88,15 @@
 				}
 				$board.redraw();
 			}).mousedown(function(e){
-				
+				var cell = Cell.fromXY(
+					e.clientX - this.offsetLeft,
+					e.clientY - this.offsetTop
+				);
+				switch($board.mode){
+					case 'defense':
+						$board.placeHole(cell);
+					break;
+				}
 			});
 			
 			$board.redraw();
