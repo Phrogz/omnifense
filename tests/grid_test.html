@@ -36,25 +36,26 @@
 			$tiles[names[i]] = new Image;
 			$tiles[names[i]].src = '../img/'+names[i]+'.png';
 		}
+		$tiles.path     = $tiles.lightyellow;
+		$tiles.waypoint = $tiles.orange;
+		$tiles.hole     = $tiles.black;
+		$tiles.start    = $tiles.green;
+		$tiles.finish   = $tiles.red;
 		
 		onload = function(){
-			$('#defense,#offense').mousedown(function(){
-				$board.path=[];
+			var waypoints=[null];
+			$('#defense,#offense').mousedown(function(e){
+				$board.overlays=[];
+				waypoints.length=1;
 				$board.mode=this.id;
 				$board.redraw();
+				e.stopPropagation();
 			});
 
 			$board = new Board( MAX_M, MAX_N, $('canvas')[0], $tiles );
-			$board.start  = (new Cell( -1, 5 )).useTile('green');
-			$board.finish = (new Cell( 23, -10)).useTile('red');
-
-			// Fill the board with random holes
-			// for (var i=0;i<50;i++){
-			// 	var m=Math.floor( Math.random()*MAX_M );
-			// 	var n=Math.floor( Math.random()*MAX_N );
-			// 	var hole = Cell.fromMN(m,n);
-			// 	$board.placeHole(hole);
-			// }
+			$board.startAt( -1, 5 );
+			$board.finishAt( 23, -10 );
+			$board.mode = 'offense';
 
 			var lastCell = null;
 			$('#grid').mousemove(function(e){
@@ -63,27 +64,33 @@
 					e.clientX - this.offsetLeft,
 					e.clientY - this.offsetTop
 				);
-				
 				if ($board.inBounds(cell)){
 					if (!lastCell || !lastCell.sameAs(cell)){
+						waypoints[waypoints.length-1] = cell;
 						lastCell = cell;
-						$board.path = [];
-						var p1,p2;
-						if (p1 = $board.shortestPath($board.start,cell)){
-							if (p2 = $board.shortestPath(cell,$board.finish)){
-								for (var i=0,len=p1.length-1;i<len;++i){
-									p1[i].tile='lightyellow';
-									$board.path[i]=p1[i];
+						$board.overlays.length=0;
+						var length=0;
+						var route;
+						var startPoint = $board.start;
+						for (var i=0,len=waypoints.length;i<=len;++i){
+							endPoint = (i==len) ? $board.finish : waypoints[i];
+							if (route=$board.shortestPath(startPoint,endPoint)){
+								for (var j=0,len2=route.length-1;j<len2;++j){
+									route[j].type='path';
+									$board.overlays[length++] = route[j];
 								}
-								p1[i].tile = 'orange';
-								$board.path[i]=p1[i];
-								for (var i=0,len=p2.length-1;i<len;++i){
-									p2[i].tile='lightyellow';
-									$board.path.push(p2[i]);
+								// The very last end point is Finish; don't run over it.
+								if (i<len){
+									endPoint.type  = 'waypoint';
+									$board.overlays[length++] = endPoint;
 								}
-								$('#output').html( $board.path.length );
+								startPoint = endPoint;
+							}else{
+								$board.overlays.length=0;
+								break;
 							}
 						}
+						$('#output').html( $board.overlays.length || '-' );
 					}
 				}
 				$board.redraw();
@@ -94,7 +101,12 @@
 				);
 				switch($board.mode){
 					case 'defense':
-						$board.placeHole(cell);
+						$board.placeTile(cell,'hole');
+					break;
+					case 'offense':
+						waypoints[waypoints.length-1] = cell;
+						waypoints.length += 1;
+						console.log( waypoints.join("::") );
 					break;
 				}
 			});

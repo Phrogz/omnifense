@@ -1,26 +1,33 @@
-function Board(maxM,maxN,canvas,tiles){
+function Board(maxM,maxN,canvas,imgs){
 	this.maxM = maxM;
 	this.maxN = maxN;
-	this.features = [];
 	this.path = [];
-	this.tiles = tiles || {};
+	this.imgs = imgs || {};
 	this.canvas = canvas;
 	this.context = canvas.getContext('2d');
-	this.holes = [];
-	for (var m=0;m<=this.maxM;++m) this.holes[m] = [];
+	this.tileList = [];
+	this.overlays = [];
+	this.tiles = [];
+	for (var m=0;m<=this.maxM;++m) this.tiles[m] = [];
 };
-Board.prototype.placeHole = function(cell){
-	if (!this.inBounds(cell)) return;
-	if (cell.sameAs(this.start) || cell.sameAs(this.finish)) return;
-	if (!this.holes[cell.m]){
-		console.log( 'NO HOLE: %d', cell.m );
-		this.holes[cell.m]=[];
-	}
-	if (this.holes[cell.m][cell.n]) return;
-	this.holes[cell.m][cell.n] = true;
-	cell.tile = 'black';
-	this.features.push(cell);
+
+Board.prototype.startAt = function(a,b){
+	this.start  = this.placeTile(new Cell(a,b),'start',true);
+}
+
+Board.prototype.finishAt = function(a,b){
+	this.finish = this.placeTile(new Cell(a,b),'finish',true);
+}
+
+Board.prototype.placeTile = function(cell,type,allowOutOfBounds){
+	if (!allowOutOfBounds && !this.inBounds(cell)) return;
+	if (!this.tiles[cell.m]) this.tiles[cell.m] = [];
+	if (this.tiles[cell.m][cell.n]) return;
+	this.tiles[cell.m][cell.n] = cell;
+	this.tileList.push(cell);
+	if (type) cell.type = type;
 	this.redraw();
+	return cell;
 }
 
 Board.prototype.inBounds = function(cell){
@@ -28,19 +35,18 @@ Board.prototype.inBounds = function(cell){
 	return m>=0 && m<=this.maxM && n>=0 && n<=(this.maxN-(m%2==0 ? 1 : 0));
 }
 Board.prototype.redraw = function(){
-	var ctx = this.context, tiles=this.tiles;
+	var ctx = this.context;
 	ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
-	ctx.drawImage(tiles.border,0,0);
-	for ( var i=0,len=this.features.length; i<len; ++i ) this.drawTile(this.features[i]);
-	for ( var i=0,len=this.path.length; i<len; ++i ) this.drawTile(this.path[i]);
-	this.drawTile(this.start);
-	this.drawTile(this.finish);
-	ctx.drawImage( tiles.hexgrid, 0, 0 );
+	ctx.drawImage(this.imgs.border,0,0);
+	for ( var i=0,len=this.tileList.length; i<len; ++i ) this.drawTile(this.tileList[i]);
+	for ( var i=0,len=this.overlays.length; i<len; ++i ) this.drawTile(this.overlays[i]);
+	ctx.drawImage( this.imgs.hexgrid, 0, 0 );
 }
 Board.prototype.drawTile = function( cell ){
-	this.context.drawImage( this.tiles[cell.tile], cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
+	this.context.drawImage( this.imgs[cell.type], cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
 }
 
+//TODO: don't put the destination (b) in the returned path
 Board.prototype.shortestPath = function(a,b){
 	var distance = [];
 	var previous = [];
@@ -74,7 +80,7 @@ Board.prototype.shortestPath = function(a,b){
 			for (var i=0;i<6;++i){
 				var neighbor = neighbors[i];
 				var m = neighbor.m, n=neighbor.n;
-				if (this.holes[m] && this.holes[m][n]) continue;
+				if (this.tiles[m] && this.tiles[m][n] && !neighbor.sameAs(b)) continue;
 				if (neighbor.sameAs(b) || this.inBounds(neighbor)){
 					var alt = cell.__distance + 1;
 					var existing_distance = distance[m][n];
@@ -89,5 +95,6 @@ Board.prototype.shortestPath = function(a,b){
 			}
 		}
 	}
+	console.log("No path from %s to %s",a+"",b+"");
 	return false;
 }
