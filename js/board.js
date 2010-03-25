@@ -1,13 +1,33 @@
-function Board(maxM,maxN){
+function Board(maxM,maxN,canvas,tiles){
 	this.maxM = maxM;
 	this.maxN = maxN;
+	this.features = [];
+	this.path = [];
 	this.holes = [];
+	this.tiles = tiles || {};
+	this.canvas = canvas;
+	this.context = canvas.getContext('2d');
 	for (var m=0;m<=this.maxM;++m) this.holes[m] = [];
 };
 Board.prototype.inBounds = function(cell){
 	var m=cell.m, n=cell.n;
 	return m>=0 && m<=this.maxM && n>=0 && n<=(this.maxN-(m%2==0 ? 1 : 0));
 }
+Board.prototype.redraw = function(){
+	var ctx = this.context, tiles=this.tiles;
+	ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+	ctx.drawImage(tiles.border,0,0);
+	for ( var i=0,len=this.features.length; i<len; ++i ){
+		var cell = this.features[i];
+		ctx.drawImage( tiles[cell.tile], cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
+	}
+	for ( var i=0,len=this.path.length; i<len; ++i ){
+		var cell = this.path[i];
+		ctx.drawImage( tiles[cell.tile], cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
+	} 
+	ctx.drawImage( tiles.hexgrid, 0, 0 );
+}
+
 Board.prototype.shortestPath = function(a,b){
 	var distance = [];
 	var previous = [];

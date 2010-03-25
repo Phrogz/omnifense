@@ -12,6 +12,7 @@
 		#offense { left:0; right:auto }
 		
 	</style>
+	<script type="text/javascript" src="../js/jquery-1.4.2.min.js"></script>
 	<script type="text/javascript" src="../js/cell.js"></script>
 	<script type="text/javascript" src="../js/board.js"></script>
 	<script type="text/javascript">
@@ -21,10 +22,6 @@
 		CEL_OFFSET = 24;
 		CEL_HEIGHT = 48;
 		
-		// Canvas
-		WIDTH      = 1024;
-		HEIGHT     = 768;
-		
 		// MN grid coordinates
 		MAX_M      = 22;
 		MAX_N      = 15;
@@ -33,98 +30,67 @@
 		HEX_WIDTH  = 55;
 		HEX_HEIGHT = 48;
 
-		wires  = new Image; wires.src ='../img/hexgrid.png';
-		border = new Image; border.src='../img/border.png';
-		blue   = new Image; blue.src  ='../img/lightblue.png';
-		yellow = new Image; yellow.src='../img/lightyellow.png';
-		orange = new Image; orange.src='../img/orange.png';
-		black  = new Image; black.src ='../img/black.png';
-		green  = new Image; green.src ='../img/green.png';
-		red    = new Image; red.src   ='../img/red.png';
+		$tiles = {};
+		var names = "hexgrid border lightblue lightyellow orange black green red".split(" ");
+		for (var i=names.length-1;i>=0;--i){
+			$tiles[names[i]] = new Image;
+			$tiles[names[i]].src = '../img/'+names[i]+'.png';
+		}
 		
 		onload = function(){
-			grid = document.getElementById('grid');
-			out  = document.getElementById('output');
-			cnv  = grid.getElementsByTagName('canvas')[0];
-			ctx  = cnv.getContext('2d');
-			grid.onmousemove=handleMove;
+			$board = new Board( MAX_M, MAX_N, $('canvas')[0], $tiles );
 
-			$board = new Board( MAX_M, MAX_N );
-			$board.features = [];
-			$board.path     = [];
-
-			// A lovely river (testing a,b,c coordinates)
-			for (var i=0;i<9;++i) $board.features.push(new Cell(i,0,0));
-			for (var i=0;i<5;++i) $board.features.push(new Cell(9,i,0));
-			for (var i=0;i<7;++i) $board.features.push(new Cell(9,5,-i));
-
-			// $start  = new Cell( -1, 5 );
-			$start  = Cell.fromMN( Math.random()*MAX_M<<0, Math.random()*MAX_N-1<<0 );
-			$start.color = green;
-			// $finish = new Cell( 23, -10);
-			$finish  = Cell.fromMN( Math.random()*MAX_M<<0, Math.random()*MAX_N-1<<0 );
-			$finish.color = red;
-
+			$start  = (new Cell( -1, 5 )).useTile('green');
 			$board.features.push($start);
+
+			$finish = (new Cell( 23, -10)).useTile('red');
 			$board.features.push($finish);
 
 			// Fill the board with random holes
-			for (var i=0;i<150;i++){
+			for (var i=0;i<50;i++){
 				var m=Math.floor( Math.random()*MAX_M );
 				var n=Math.floor( Math.random()*MAX_N );
-				hole = Cell.fromMN(m,n);
+				var hole = Cell.fromMN(m,n).useTile('black');
 				if (hole.sameAs($start) || hole.sameAs($finish)) continue;
-				hole.color = black;
 				$board.holes[m][n] = true;
 				$board.features.push(hole);
 			}
-			
-			updateGrid();
-		}
-		
-		last=null;
-		function handleMove(e){
-			var nearest = Cell.fromXY(
-				e.clientX - grid.offsetLeft,
-				e.clientY - grid.offsetTop
-			);
-			if ($board.inBounds(nearest)){
-				if (last && last.sameAs(nearest)) return;
-				last = nearest;
-				$board.path = [];
-				var p1,p2;
-				if (p1 = $board.shortestPath($start,nearest)){
-					if (p2 = $board.shortestPath(nearest,$finish)){
-						for (var i=0,len=p1.length-1;i<len;++i){
-							p1[i].color=yellow;
-							$board.path[i]=p1[i];
+
+			$lastCell = null;
+			$('#grid').mousemove(function(e){
+				var cell = Cell.fromXY(
+					e.clientX - this.offsetLeft,
+					e.clientY - this.offsetTop
+				);
+				
+				if ($board.inBounds(cell)){
+					if (!$lastCell || !$lastCell.sameAs(cell)){
+						$lastCell = cell;
+						$board.path = [];
+						var p1,p2;
+						if (p1 = $board.shortestPath($start,cell)){
+							if (p2 = $board.shortestPath(cell,$finish)){
+								for (var i=0,len=p1.length-1;i<len;++i){
+									p1[i].tile='lightyellow';
+									$board.path[i]=p1[i];
+								}
+								p1[i].tile = 'orange';
+								$board.path[i]=p1[i];
+								for (var i=0,len=p2.length-1;i<len;++i){
+									p2[i].tile='lightyellow';
+									$board.path.push(p2[i]);
+								}
+								$('#output').html( $board.path.length );
+							}
 						}
-						p1[i].color = orange;
-						$board.path[i]=p1[i];
-						for (var i=0,len=p2.length-1;i<len;++i){
-							p2[i].color=yellow;
-							$board.path.push(p2[i]);
-						}
-						out.innerText = $board.path.length;
 					}
 				}
-				updateGrid();				
-			}
-		};
-		
-		function updateGrid(point){
-			// Don't update if snapping to the same cell
-			ctx.clearRect(0,0,WIDTH,HEIGHT);
-			ctx.drawImage(border,0,0);
-			for ( var i=0,len=$board.features.length; i<len; ++i ){
-				var cell = $board.features[i];
-				ctx.drawImage( cell.color || blue, cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
-			}
-			for ( var i=0,len=$board.path.length; i<len; ++i ){
-				var cell = $board.path[i];
-				ctx.drawImage( cell.color || blue, cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
-			} 
-			ctx.drawImage( wires, 0, 0 );
+				$board.redraw();
+			}).mousedown(function(e){
+				
+			});
+			
+			$board.redraw();
 		}
 		
 	</script> 

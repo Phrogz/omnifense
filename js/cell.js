@@ -36,6 +36,10 @@ Cell.prototype.offset = function(a,b,c){
 Cell.prototype.sameAs = function(otherCell){
 	return this.a==otherCell.a && this.b==otherCell.b;
 }
+Cell.prototype.useTile = function(tileName){
+	this.tile = tileName;
+	return this;
+}
 Cell.prototype.toString = function(){
 	return "<ab:"+this.a+","+this.b+"; mn:"+this.m+","+this.n+">"
 }
