@@ -8,6 +8,7 @@
 		#grid { margin:0 auto; width:1024px; position:relative }
 		#grid canvas { border:1px solid #999; background:#fff; }
 		#highlight { position:absolute; left:48px; top:111px; display:none }
+		#output { position:absolute; top:1px; right:1px; padding:0.1em 0.5em; text-align:right; background:rgba(255, 255, 255, .8); }
 	</style>
 	<script type="text/javascript">
 		// Hex Grid
@@ -132,6 +133,7 @@
 		
 		onload = function(){
 			grid = document.getElementById('grid');
+			out  = document.getElementById('output');
 			cnv  = grid.getElementsByTagName('canvas')[0];
 			ctx  = cnv.getContext('2d');
 			grid.onmousemove=handleMove;
@@ -191,7 +193,8 @@
 						for (var i=0,len=p2.length-1;i<len;++i){
 							p2[i].color=yellow;
 							$board.path.push(p2[i]);
-						}			
+						}
+						out.innerText = $board.path.length;
 					}
 				}
 				updateGrid();				
@@ -204,11 +207,11 @@
 			ctx.drawImage(border,0,0);
 			for ( var i=0,len=$board.features.length; i<len; ++i ){
 				var cell = $board.features[i];
-				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-1, cell.xy.y-HEX_HEIGHT/2-0.5 );
+				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-.5, cell.xy.y-HEX_HEIGHT/2 );
 			}
 			for ( var i=0,len=$board.path.length; i<len; ++i ){
 				var cell = $board.path[i];
-				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-1, cell.xy.y-HEX_HEIGHT/2-0.5 );
+				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-.5, cell.xy.y-HEX_HEIGHT/2 );
 			} 
 			ctx.drawImage( wires, 0, 0 );
 		}
@@ -217,6 +220,7 @@
 </head> 
 <body>
 <div id="grid">
+	<div id="output">?SUP?</div>
 	<canvas width="1024" height="768"></canvas>
 </div>
 </body></html>
