@@ -10,21 +10,28 @@
 		#highlight { position:absolute; left:48px; top:111px; display:none }
 	</style>
 	<script type="text/javascript">
-		COL_OFFSET = 13.21;
+		// Hex Grid
+		COL_OFFSET = 13.27;
 		COL_WIDTH  = 41.567;
 		CEL_OFFSET = 24;
 		CEL_HEIGHT = 48;
+		
+		// Board
 		WIDTH      = 1024;
 		HEIGHT     = 768;
 
+		// Graphic size
 		HEX_WIDTH  = 55;
 		HEX_HEIGHT = 48;
 
 		bg     = new Image; bg.src    ='../img/hexgrid.png';
+		border = new Image; border.src='../img/border.png';
 		blue   = new Image; blue.src  ='../img/lightblue.png';
 		yellow = new Image; yellow.src='../img/lightyellow.png';
 		orange = new Image; orange.src='../img/orange.png';
 		black  = new Image; black.src ='../img/black.png';
+		green  = new Image; green.src ='../img/green.png';
+		red    = new Image; red.src   ='../img/red.png';
 
 		onload = function(){
 			grid = document.getElementById('grid');
@@ -32,29 +39,51 @@
 			ctx  = cnv.getContext('2d');
 			grid.onmousemove=handleMove;
 			clearPath();
+			for (var i=0;i<9;++i) path.push({a:i,b:0,c:0});
+			for (var i=0;i<5;++i) path.push({a:9,b:i,c:0});
+			for (var i=0;i<7;++i) path.push({a:9,b:5,c:-i});
 			updateGrid();
 		}
 		
 		function handleMove(e){
+			var snapped;
 			var pointer = { x:e.clientX - grid.offsetLeft, y:e.clientY - grid.offsetTop };
-			var column = Math.round((pointer.x-COL_OFFSET)/COL_WIDTH);
-			var snapped = {	x:column*COL_WIDTH+COL_OFFSET };
-			var yOffset = (column%2 == 0) ? CEL_OFFSET : 0;
-			snapped.y   = Math.round((pointer.y-yOffset)/CEL_HEIGHT)*CEL_HEIGHT+yOffset;
-			if (pointer.x<0 || pointer.x>WIDTH || pointer.y<0 || pointer.y>HEIGHT) snapped=null;
+			if (pointer.x>=0 && pointer.x<=WIDTH && pointer.y>=0 && pointer.y<=HEIGHT){
+				snapped = xy2abc( pointer );
+			}
 			updateGrid(snapped);
 		};
+		
+		function abc2xy(abc){
+			var x=COL_OFFSET+(abc.a+abc.c+1)*COL_WIDTH;
+			var y=CEL_OFFSET+(abc.a+2*abc.b-abc.c+1)*CEL_HEIGHT/2;
+			return {x:x,y:y};
+		}
+		function xy2abc(xy){
+			var a = Math.round( ( xy.x - COL_OFFSET - COL_WIDTH ) / COL_WIDTH );
+			var b = Math.round( ( xy.y - CEL_OFFSET - (a+1)*CEL_HEIGHT/2 ) / CEL_HEIGHT );
+			return {a:a,b:b,c:0};
+		}
 		
 		function clearPath(){ path=[]; }
 		function updateGrid(point){
 			// Don't update if snapping to the same cell
-			if (point && last && last.x==point.x && last.y==point.y) return;
-			ctx.clearRect(0,0,1024,768);
-			if (point) path.push( point );
-			//if (point) path = [ point ];
-			for ( var i=path.length-1; i>=0; --i ) ctx.drawImage( blue, path[i].x-HEX_WIDTH/2, path[i].y-HEX_HEIGHT/2 );
-			ctx.drawImage( bg, 0, 0 );
+			if (point && last && last.a==point.a && last.b==point.b && last.c==point.c) return;
+			if (point){
+				point.color = yellow;
+				path.push( point );
+			} 
 			last=point;
+
+			ctx.clearRect(0,0,1024,768);
+			ctx.drawImage( border, 0, 0 );
+			for ( var i=path.length-1; i>=0; --i ){
+				var point = path[i];
+				var xy    = abc2xy(point);
+				var color = point.color || blue;
+				ctx.drawImage( color, xy.x-HEX_WIDTH/2-1, xy.y-HEX_HEIGHT/2-0.5 );
+			} 
+			ctx.drawImage( bg, 0, 0 );
 		}
 		
 	</script> 
