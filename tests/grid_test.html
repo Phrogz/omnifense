@@ -28,7 +28,7 @@
 		HEX_WIDTH  = 55;
 		HEX_HEIGHT = 48;
 
-		bg     = new Image; bg.src    ='../img/hexgrid.png';
+		wires  = new Image; wires.src ='../img/hexgrid.png';
 		border = new Image; border.src='../img/border.png';
 		blue   = new Image; blue.src  ='../img/lightblue.png';
 		yellow = new Image; yellow.src='../img/lightyellow.png';
@@ -93,7 +93,7 @@
 			var cellsByDistance = [a];
 			var spot;
 			while (cell=cellsByDistance.shift()){
-				if (cell.sameAs($finish)){
+				if (cell.sameAs(b)){
 					var path = [];
 					while (cell.__previous){
 						path.unshift( cell );
@@ -113,7 +113,7 @@
 						var neighbor = neighbors[i];
 						var mn = neighbor.mn;
 						if (this.holes[mn.m] && this.holes[mn.m][mn.n]) continue;
-						if (neighbor.sameAs($finish) || this.inBounds(neighbor)){
+						if (neighbor.sameAs(b) || this.inBounds(neighbor)){
 							var alt = cell.__distance + 1;
 							var existing_distance = distance[mn.m][mn.n];
 							if (!existing_distance || alt<existing_distance){
@@ -135,25 +135,26 @@
 			cnv  = grid.getElementsByTagName('canvas')[0];
 			ctx  = cnv.getContext('2d');
 			grid.onmousemove=handleMove;
-			clearPath();
 
-			$start  = new Cell( -1, 5 );
+			$board = new Board( MAX_M, MAX_N );
+			$board.features = [];
+			$board.path     = [];
+
+			// A lovely river (testing a,b,c coordinates)
+			for (var i=0;i<9;++i) $board.features.push(new Cell(i,0,0));
+			for (var i=0;i<5;++i) $board.features.push(new Cell(9,i,0));
+			for (var i=0;i<7;++i) $board.features.push(new Cell(9,5,-i));
+
+			// $start  = new Cell( -1, 5 );
 			$start  = Cell.fromMN( Math.random()*MAX_M<<0, Math.random()*MAX_N-1<<0 );
 			$start.color = green;
-			$finish = new Cell( 23, -10);
+			// $finish = new Cell( 23, -10);
 			$finish  = Cell.fromMN( Math.random()*MAX_M<<0, Math.random()*MAX_N-1<<0 );
 			$finish.color = red;
 
-			// A lovely river (testing a,b,c coordinates)
-			for (var i=0;i<9;++i) path.push(new Cell(i,0,0));
-			for (var i=0;i<5;++i) path.push(new Cell(9,i,0));
-			for (var i=0;i<7;++i) path.push(new Cell(9,5,-i));
+			$board.features.push($start);
+			$board.features.push($finish);
 
-			path.push($start);
-			path.push($finish);
-
-			$board = new Board( MAX_M, MAX_N );
-			
 			// Fill the board with random holes
 			for (var i=0;i<150;i++){
 				var m=Math.floor( Math.random()*MAX_M );
@@ -162,46 +163,54 @@
 				if (hole.sameAs($start) || hole.sameAs($finish)) continue;
 				hole.color = black;
 				$board.holes[m][n] = true;
-				path.push(hole);
+				$board.features.push(hole);
 			}
 			
-			// Calculate the shortest path, if possible
-			var shortest = $board.shortestPath($start,$finish);
-			if (shortest){
-				// Don't draw over the $finish, which is in the path
-				for (var i=0,len=shortest.length-1;i<len;++i){
-					shortest[i].color = orange;
-					path.push(shortest[i]);
-				};
-			}
 			updateGrid();
 		}
 		
+		last=null;
 		function handleMove(e){
 			var nearest = Cell.fromXY(
 				e.clientX - grid.offsetLeft,
 				e.clientY - grid.offsetTop
 			);
-			nearest.color = yellow;
-			if (!$board.inBounds(nearest)) nearest=null;
-			updateGrid(nearest);
+			if ($board.inBounds(nearest)){
+				if (last && last.sameAs(nearest)) return;
+				last = nearest;
+				$board.path = [];
+				var p1,p2;
+				if (p1 = $board.shortestPath($start,nearest)){
+					if (p2 = $board.shortestPath(nearest,$finish)){
+						for (var i=0,len=p1.length-1;i<len;++i){
+							p1[i].color=yellow;
+							$board.path[i]=p1[i];
+						}
+						p1[i].color = orange;
+						$board.path[i]=p1[i];
+						for (var i=0,len=p2.length-1;i<len;++i){
+							p2[i].color=yellow;
+							$board.path.push(p2[i]);
+						}			
+					}
+				}
+				updateGrid();				
+			}
 		};
 		
-		last=null;
-		function clearPath(){ path=[]; }
 		function updateGrid(point){
 			// Don't update if snapping to the same cell
-			if (point && last && last.a==point.a && last.b==point.b) return;
-			if (point) path.push( point );
-			last=point;
-
-			ctx.clearRect(0,0,1024,768);
-			ctx.drawImage( border, 0, 0 );
-			for ( var i=0,len=path.length; i<len; ++i ){
-				var cell = path[i];
+			ctx.clearRect(0,0,WIDTH,HEIGHT);
+			ctx.drawImage(border,0,0);
+			for ( var i=0,len=$board.features.length; i<len; ++i ){
+				var cell = $board.features[i];
+				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-1, cell.xy.y-HEX_HEIGHT/2-0.5 );
+			}
+			for ( var i=0,len=$board.path.length; i<len; ++i ){
+				var cell = $board.path[i];
 				ctx.drawImage( cell.color || blue, cell.xy.x-HEX_WIDTH/2-1, cell.xy.y-HEX_HEIGHT/2-0.5 );
 			} 
-			ctx.drawImage( bg, 0, 0 );
+			ctx.drawImage( wires, 0, 0 );
 		}
 		
 	</script> 
