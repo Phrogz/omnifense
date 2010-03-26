@@ -6,7 +6,7 @@
 	<style type="text/css" media="screen">
 		body { background:#eee }
 		#grid { margin:0 auto; width:1024px; height:768px; position:relative }
-		#grid canvas { border:2px solid #333; background:#fff; }
+		#grid canvas { border:2px solid #333; background:#eee; }
 		#output { position:absolute; top:1px; right:0px; padding:0.1em 0.5em; text-align:right; background:rgba(255, 255, 255, .8); }
 		#offense, #defense { font-size:9pt; font-weight:bold; position:absolute; bottom:0; margin:0; right:0 }
 		#offense { left:0; right:auto }
@@ -42,12 +42,65 @@
 		$tiles.start    = $tiles.green;
 		$tiles.finish   = $tiles.red;
 		
+		function plotOffensePath(board,waypoints){
+			var fullPath = multiWaypointPath(board,waypoints);
+			if (fullPath){
+				var length = fullPath.length;
+				board.overlays=waypoints;
+				simplifyPath(fullPath);
+				board.path = fullPath;
+				return length;
+			}
+		}
+		
+		function multiWaypointPath(board,waypoints){
+			var points = waypoints.concat();
+			if (points[points.length-1]) points[points.length]=board.finish;
+			else points[points.length-1]=board.finish;
+			var startPoint = board.start;
+			var path=[startPoint],length=1,route;
+			for (var i=0,len=points.length;i<len;++i){
+				var endPoint=points[i];
+				if (route=board.shortestPath(startPoint,endPoint)){
+					for (var j=0,len2=route.length;j<len2;++j){
+						route[j].type = (j==(len2-1) ? 'waypoint' : 'path');
+						path[length++] = route[j];
+					}
+					startPoint = endPoint;
+				}else{
+					return null;
+				}
+			}
+			return path;
+		}
+		
+		function simplifyPath(path){
+			var trimTo,prev,cell,axis,lastAxis,a,b,c;
+			for (var i=path.length-1;i>=1;--i){
+				prev=path[i-1];
+				cell=path[i];
+				a=cell.a-prev.a;
+				b=cell.b-prev.b;
+				axis = (a&&b) ? ('c'+a) : a ? ('a'+a) : ('b'+b);
+				if (!lastAxis || lastAxis!=axis || i==1){
+					if (trimTo){
+						var startTrim = (i==1 && lastAxis==axis) ? i : (i+1);
+						var extraCount = trimTo-startTrim;
+						path.splice(startTrim,extraCount);
+					}
+					trimTo = i;
+					lastAxis=axis;
+				}
+			}
+		}
+		
 		onload = function(){
-			var waypoints=[null];
+			var waypoints=[null]; // placeholder for in-progress waypoint.
 			$('#defense,#offense').mousedown(function(e){
-				$board.overlays=[];
+				$board.overlays.length=0;
 				waypoints.length=1;
 				$board.mode=this.id;
+				$board.path=null;
 				$board.redraw();
 				e.stopPropagation();
 			});
@@ -59,56 +112,54 @@
 
 			var lastCell = null;
 			$('#grid').mousemove(function(e){
-				if ($board.mode=='defense') return;
-				var cell = Cell.fromXY(
-					e.clientX - this.offsetLeft,
-					e.clientY - this.offsetTop
-				);
-				if ($board.inBounds(cell)){
+				
+				if ($board.mode!='offense') return;
+				var cell = Cell.fromXY( e.clientX-this.offsetLeft, e.clientY-this.offsetTop	);
+				if ($board.inBounds(cell) && $board.tileOpen(cell)){
 					if (!lastCell || !lastCell.sameAs(cell)){
-						waypoints[waypoints.length-1] = cell;
-						lastCell = cell;
-						$board.overlays.length=0;
-						var length=0;
-						var route;
-						var startPoint = $board.start;
-						for (var i=0,len=waypoints.length;i<=len;++i){
-							endPoint = (i==len) ? $board.finish : waypoints[i];
-							if (route=$board.shortestPath(startPoint,endPoint)){
-								for (var j=0,len2=route.length-1;j<len2;++j){
-									route[j].type='path';
-									$board.overlays[length++] = route[j];
-								}
-								// The very last end point is Finish; don't run over it.
-								if (i<len){
-									endPoint.type  = 'waypoint';
-									$board.overlays[length++] = endPoint;
-								}
-								startPoint = endPoint;
-							}else{
-								$board.overlays.length=0;
-								break;
-							}
-						}
-						$('#output').html( $board.overlays.length || '-' );
+						lastCell = waypoints[waypoints.length-1] = cell;
+						cell.type = 'waypoint';
+						var pathLength = plotOffensePath($board,waypoints);
+						$('#output').html( pathLength || '-' );
 					}
 				}
 				$board.redraw();
+				
+				
 			}).mousedown(function(e){
-				var cell = Cell.fromXY(
-					e.clientX - this.offsetLeft,
-					e.clientY - this.offsetTop
-				);
+				var cell = Cell.fromXY( e.clientX-this.offsetLeft, e.clientY-this.offsetTop	);
 				switch($board.mode){
 					case 'defense':
 						$board.placeTile(cell,'hole');
 					break;
+
 					case 'offense':
-						waypoints[waypoints.length-1] = cell;
-						waypoints.length += 1;
-						console.log( waypoints.join("::") );
+						if (cell.sameAs($board.finish)){
+							$board.mode = 'offense-locked';
+							waypoints[waypoints.length-1] = null;
+							plotOffensePath($board,waypoints);
+						}else{
+							cell.type='waypoint';
+							waypoints[waypoints.length-1] = cell;
+							waypoints.length += 1;
+						}
+					break;
+
+					case 'offense-locked':
+						if (cell.sameAs($board.start)){
+							$board.mode = 'offense';
+						}else{
+							for (var i=waypoints.length-2;i>=0;--i){
+								if (cell.sameAs(waypoints[i])){
+									waypoints.splice(i,1);
+									plotOffensePath($board,waypoints);
+									break;
+								}
+							}
+						}
 					break;
 				}
+				$board.redraw();
 			});
 			
 			$board.redraw();

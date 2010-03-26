@@ -1,10 +1,10 @@
 function Board(maxM,maxN,canvas,imgs){
 	this.maxM = maxM;
 	this.maxN = maxN;
-	this.path = [];
+	this.path = null;
 	this.imgs = imgs || {};
-	this.canvas = canvas;
-	this.context = canvas.getContext('2d');
+	this.canvas   = canvas;
+	this.context  = canvas.getContext('2d');
 	this.tileList = [];
 	this.overlays = [];
 	this.tiles = [];
@@ -12,7 +12,7 @@ function Board(maxM,maxN,canvas,imgs){
 };
 
 Board.prototype.startAt = function(a,b){
-	this.start  = this.placeTile(new Cell(a,b),'start',true);
+	this.start = this.placeTile(new Cell(a,b),'start',true);
 }
 
 Board.prototype.finishAt = function(a,b){
@@ -34,19 +34,43 @@ Board.prototype.inBounds = function(cell){
 	var m=cell.m, n=cell.n;
 	return m>=0 && m<=this.maxM && n>=0 && n<=(this.maxN-(m%2==0 ? 1 : 0));
 }
+
+Board.prototype.tileOpen = function(cell){
+	return !this.tiles[cell.m] || !this.tiles[cell.m][cell.n];
+}
+
 Board.prototype.redraw = function(){
 	var ctx = this.context;
 	ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
 	ctx.drawImage(this.imgs.border,0,0);
-	for ( var i=0,len=this.tileList.length; i<len; ++i ) this.drawTile(this.tileList[i]);
-	for ( var i=0,len=this.overlays.length; i<len; ++i ) this.drawTile(this.overlays[i]);
+	for (var i=0,len=this.tileList.length; i<len; ++i ) this.drawTile(this.tileList[i]);
+	for (var i=0,len=this.overlays.length; i<len; ++i ) this.drawTile(this.overlays[i]);
+
+	if (this.path && this.path.length>1){
+		ctx.strokeStyle='rgba(0,0,0,0.5)';
+		ctx.beginPath();
+		ctx.moveTo(this.path[0].x,this.path[0].y);
+		for (var i=1,len=this.path.length;i<len;++i) ctx.lineTo(this.path[i].x,this.path[i].y);
+		ctx.stroke();
+		
+		// Dots on the bends
+		ctx.fillStyle='rgba(255,255,255,0.9)';
+		ctx.strokeStyle='rgba(0,0,0,0.9)';
+		for (var i=0,len=this.path.length;i<len;++i){
+			var cell=this.path[i];
+			ctx.beginPath();
+			ctx.arc(cell.x,cell.y,7,0,Math.PI*2,true);
+			ctx.fill();
+			ctx.stroke();
+		}
+	}
+
 	ctx.drawImage( this.imgs.hexgrid, 0, 0 );
 }
 Board.prototype.drawTile = function( cell ){
-	this.context.drawImage( this.imgs[cell.type], cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
+	if (cell) this.context.drawImage( this.imgs[cell.type], cell.x-HEX_WIDTH/2-.5, cell.y-HEX_HEIGHT/2 );
 }
 
-//TODO: don't put the destination (b) in the returned path
 Board.prototype.shortestPath = function(a,b){
 	var distance = [];
 	var previous = [];
