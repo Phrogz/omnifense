@@ -115,7 +115,7 @@
 				
 				if ($board.mode!='offense') return;
 				var cell = Cell.fromXY( e.clientX-this.offsetLeft, e.clientY-this.offsetTop	);
-				if ($board.inBounds(cell) && $board.tileOpen(cell)){
+				if ($board.inBounds(cell) && !$board.tileAt(cell)){
 					if (!lastCell || !lastCell.sameAs(cell)){
 						lastCell = waypoints[waypoints.length-1] = cell;
 						cell.type = 'waypoint';
@@ -130,7 +130,15 @@
 				var cell = Cell.fromXY( e.clientX-this.offsetLeft, e.clientY-this.offsetTop	);
 				switch($board.mode){
 					case 'defense':
-						$board.placeTile(cell,'hole');
+						var existing;
+						if ((existing=$board.tileAt(cell)) && existing.type=='hole'){
+							$board.removeTile(existing);
+						}else{
+							$board.placeTile(cell,'hole');
+							if (!$board.shortestPath($board.start,$board.finish)){
+								$board.removeTile(cell);
+							}
+						}
 					break;
 
 					case 'offense':

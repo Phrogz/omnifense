@@ -13,11 +13,11 @@ function Board(maxM,maxN,canvas,imgs){
 
 Board.prototype.startAt = function(a,b){
 	this.start = this.placeTile(new Cell(a,b),'start',true);
-}
+};
 
 Board.prototype.finishAt = function(a,b){
 	this.finish = this.placeTile(new Cell(a,b),'finish',true);
-}
+};
 
 Board.prototype.placeTile = function(cell,type,allowOutOfBounds){
 	if (!allowOutOfBounds && !this.inBounds(cell)) return;
@@ -28,16 +28,26 @@ Board.prototype.placeTile = function(cell,type,allowOutOfBounds){
 	if (type) cell.type = type;
 	this.redraw();
 	return cell;
-}
+};
+
+Board.prototype.removeTile = function(cell){
+	if (this.tiles[cell.m]) this.tiles[cell.m][cell.n] = null;
+	for (var i=this.tileList.length-1;i>=0;--i){
+		if (this.tileList[i]==cell){
+			this.tileList.splice(i,1);
+			return cell;
+		}
+	}
+};
+
+Board.prototype.tileAt = function(cell){
+	return this.tiles[cell.m] && this.tiles[cell.m][cell.n];
+};
 
 Board.prototype.inBounds = function(cell){
 	var m=cell.m, n=cell.n;
 	return m>=0 && m<=this.maxM && n>=0 && n<=(this.maxN-(m%2==0 ? 1 : 0));
-}
-
-Board.prototype.tileOpen = function(cell){
-	return !this.tiles[cell.m] || !this.tiles[cell.m][cell.n];
-}
+};
 
 Board.prototype.redraw = function(){
 	var ctx = this.context;
