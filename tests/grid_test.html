@@ -94,6 +94,14 @@
 			}
 		}
 		
+		function removeWaypoint(waypoints,cell){
+			for (var i=waypoints.length-2;i>=0;--i){
+				if (waypoints[i].sameAs(cell)){
+					return waypoints.splice(i,1);
+				}
+			}
+		}
+		
 		onload = function(){
 			var waypoints=[null]; // placeholder for in-progress waypoint.
 			$('#defense,#offense').mousedown(function(e){
@@ -122,6 +130,10 @@
 						var pathLength = plotOffensePath($board,waypoints);
 						$('#output').html( pathLength || '-' );
 					}
+				}else{
+					waypoints[waypoints.length-1] = null;
+					var pathLength = plotOffensePath($board,waypoints);
+					$('#output').html( pathLength || '-' );
 				}
 				$board.redraw();
 				
@@ -147,9 +159,13 @@
 							waypoints[waypoints.length-1] = null;
 							plotOffensePath($board,waypoints);
 						}else{
-							cell.type='waypoint';
-							waypoints[waypoints.length-1] = cell;
-							waypoints.length += 1;
+							if (removeWaypoint(waypoints,cell)){
+								plotOffensePath($board,waypoints);
+							}else{
+								cell.type='waypoint';
+								waypoints[waypoints.length-1] = cell;
+								waypoints.length += 1;
+							}
 						}
 					break;
 
@@ -157,12 +173,8 @@
 						if (cell.sameAs($board.start)){
 							$board.mode = 'offense';
 						}else{
-							for (var i=waypoints.length-2;i>=0;--i){
-								if (cell.sameAs(waypoints[i])){
-									waypoints.splice(i,1);
-									plotOffensePath($board,waypoints);
-									break;
-								}
+							if (removeWaypoint(waypoints,cell)){
+								plotOffensePath($board,waypoints);
 							}
 						}
 					break;
