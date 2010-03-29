@@ -42,11 +42,16 @@
 		$tiles.start    = $tiles.green;
 		$tiles.finish   = $tiles.red;
 		
-		function plotOffensePath(board,waypoints){
+		function plotOffensePath(board,waypoints,dump){
 			var fullPath = multiWaypointPath(board,waypoints);
 			if (fullPath){
 				var length = fullPath.length;
 				board.overlays=waypoints;
+				// if (dump){
+				// 	var path = [];
+				// 	for (var i=0;i<fullPath.length;++i) path[i]=[fullPath[i].m,fullPath[i].n];
+				// 	console.log(path);
+				// }
 				simplifyPath(fullPath);
 				board.path = fullPath;
 				return length;
@@ -117,6 +122,7 @@
 			$board.startAt( -1, 5 );
 			$board.finishAt( 23, -10 );
 			$board.mode = 'offense';
+			$board.redraw();
 
 			var lastCell = null;
 			$('#grid').mousemove(function(e){
@@ -149,6 +155,8 @@
 							$board.placeTile(cell,'hole');
 							if (!$board.shortestPath($board.start,$board.finish)){
 								$board.removeTile(cell);
+							// }else{
+							// 	console.log([cell.m,cell.n]);
 							}
 						}
 					break;
@@ -157,7 +165,8 @@
 						if (cell.sameAs($board.finish)){
 							$board.mode = 'offense-locked';
 							waypoints[waypoints.length-1] = null;
-							plotOffensePath($board,waypoints);
+							plotOffensePath($board,waypoints,true);
+							
 						}else{
 							if (removeWaypoint(waypoints,cell)){
 								plotOffensePath($board,waypoints);
@@ -182,7 +191,6 @@
 				$board.redraw();
 			});
 			
-			$board.redraw();
 		}
 		
 	</script> 
