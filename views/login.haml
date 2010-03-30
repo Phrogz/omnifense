@@ -1,0 +1,8 @@
+%form{action:'login', method:'post'}
+	%h2 Who Are You?
+	.section
+		%select{name:'user_id'}
+			%option (just pick one for now)
+			- @users.each do |user|
+				%option{value:user.pk,}&= user.nick
+		%button{type:'submit'} Just Let Me In

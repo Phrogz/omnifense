@@ -62,9 +62,10 @@ Class.new Sequel::Migration do
 		end
 		create_table :users do
 			primary_key :id
-			String      :email, unique: true, null: false
-			String      :nick,  unique: true
+			String      :email,    unique: true, null: false
+			String      :nick,     unique: true
 			String      :passhash, null: false
+			String      :cookey
 		end
 		create_table :games do
 			primary_key :id

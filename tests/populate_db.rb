@@ -5,8 +5,8 @@ require 'models/init'
 noob = RunnerType.create id:1, name:"noob"
 hole = TowerType.create  id:1, name:"hole"
 
-gk = User.create email:'!@phrogz.net', nick:'Phrogz', passhash:'no'
-
+gk = User.create email:'!@phrogz.net', nick:'Phrogz', passhash:'no', cookey:'abcdefg'
+hh = User.create email:'hhausman@gmail.com', nick:'hrrld', passhash:'in'
 board = Board.create name:'board', background:'board-back.png', overlay:'board-over.png'
 0.step(22,2){ |i| board.add_ignore m:i, n:15 }
 
@@ -20,7 +20,7 @@ level.add_wave wave_number:3, runners:1, towers:4
 
 game = level.add_game( name:"Test", offense_key:"letmein", defense_key:"stopit" )
 game.offense = gk
-game.defense = gk
+game.save
 
 GameDefenseMove.unrestrict_primary_key
 GameOffenseMove.unrestrict_primary_key

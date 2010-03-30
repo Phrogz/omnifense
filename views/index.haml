@@ -1,0 +1,45 @@
+%form{ action:'go', method:'post' }
+				
+	%h2 Your Games
+	.section
+		- if @ogames.empty? && @dgames.empty?
+			%p.ancillary (no active games)
+		- else
+			%select{size:10}
+				- unless @ogames.empty?
+					%optgroup{label:'On Offense'}
+						- @ogames.each do |game|
+							%option{value:game.pk}
+								&= game.name
+								vs.
+								&= game.defense.nick
+				- unless @dgames.empty?
+					%optgroup{label:'On Defense'}
+						- @dgames.each do |game|
+							%option{value:game.pk}
+								&= game.name
+								vs.
+								&= game.offense.nick
+		%button{name:'new'} Start a New Game
+		
+		%h2 Open Games
+		.section
+			- if @open_o.empty? && @open_d.empty?
+				%p.ancillary (no open games)
+			- else
+				%select{size:10}
+					- unless @open_o.empty?
+						%optgroup{label:'You Play Offense'}
+							- @open_o.each do |game|
+								%option{value:game.pk}
+									&= game.name
+									vs.
+									&= game.defense.nick
+					- unless @open_d.empty?
+						%optgroup{label:'You Play Defense'}
+							- @ogames.each do |game|
+								%option{value:game.pk}
+									&= game.name
+									vs.
+									&= game.offense.nick
+		
