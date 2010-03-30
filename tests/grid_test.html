@@ -43,7 +43,11 @@
 		$tiles.finish   = $tiles.red;
 		
 		function plotOffensePath(board,waypoints,dump){
-			var fullPath = multiWaypointPath(board,waypoints);
+			//var startTime = new Date;
+			var fullPath;
+			//for (var i=0;i<100;++i)
+				fullPath = multiWaypointPath(board,waypoints);
+			// console.log( (new Date)-startTime );
 			if (fullPath){
 				var length = fullPath.length;
 				board.overlays=waypoints;

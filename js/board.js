@@ -116,7 +116,8 @@ Board.prototype.shortestPath = function(a,b){
 				var m = neighbor.m, n=neighbor.n;
 				if (this.tiles[m] && this.tiles[m][n] && !neighbor.sameAs(b)) continue;
 				if (neighbor.sameAs(b) || this.inBounds(neighbor)){
-					var alt = cell.__distance + 1;
+					var dx=(neighbor.x-cell.x), dy=(neighbor.y-cell.y);
+					var alt = cell.__distance + 1 // + dx*dx+dy*dy;
 					var existing_distance = distance[m][n];
 					if (!existing_distance || alt<existing_distance){
 						neighbor.__distance = distance[m][n] = alt;
