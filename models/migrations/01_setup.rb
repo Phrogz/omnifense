@@ -16,6 +16,7 @@ Class.new Sequel::Migration do
 			Float       :tile_height, null: false, default: 48
 			String      :background
 			String      :overlay
+			String      :thumbnail
 			DateTime    :created_on, default: "current_timestamp".lit
 			foreign_key :created_by, :users
 		end
@@ -30,6 +31,7 @@ Class.new Sequel::Migration do
 			foreign_key :board_id, :boards, null: false
 			String      :name, null: false, unique: true
 			Integer     :lives, null: false
+			String      :thumbnail
 			DateTime    :created_on, default: "current_timestamp".lit
 			foreign_key :created_by, :users
 		end

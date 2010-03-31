@@ -2,6 +2,7 @@ require 'sinatra'
 require 'haml'
 require 'sequel'
 require 'models/init'
+require 'lib/tojs'
 
 set :haml, { :format => :html4 }
 set :environment, :development
@@ -43,12 +44,10 @@ get '/' do
 	@id     = :index
 	@title  = "Welcome to"
 	@me     = User[session[:user]]
-	@offense_games = @me.games(:offense)
-	@defense_games = @me.games(:offense)
-	@open_offense_games = @me.games(:offense,true)
-	@open_defense_games = @me.games(:offense,true)
-	@open_o = Game.filter( offense_user_id:nil ).eager(:defense).all
-	@open_d = Game.filter( defense_user_id:nil ).eager(:offense).all
+	@my_games_on_offense = @me.games(:offense)
+	@my_games_on_defense = @me.games(:offense)
+	@games_with_open_o   = Game.filter( offense_user_id:nil ).eager(:defense).all
+	@games_with_open_d   = Game.filter( defense_user_id:nil ).eager(:offense).all
 	haml :index
 end
 
@@ -59,4 +58,10 @@ end
 
 post '/login' do
 	check_login
+end
+
+get '/new_game' do
+	@js = 'new_game.js'
+	@boards = Board.eager(:levels).all
+	haml :new_game
 end

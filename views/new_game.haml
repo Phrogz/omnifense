@@ -1,0 +1,23 @@
+:javascript
+	$levelsByBoard = #{
+		boards = {}
+		@boards.each{ |b|
+			boards[b.id] = b.levels.map{ |l|
+				{ id:l.pk, name:l.name, lives:l.lives, thumb:l.thumbnail }
+			}
+		}
+		boards.to_js
+	};
+	
+%h2 New Game Settings
+%form.section.autovalidate{action:'new_game',method:'post'}
+	%p
+		%label
+			Board:
+			%select#board.required{name:'board_id',size:[@boards.length,2].max}
+				- @boards.each do |board|
+					%option{value:board.pk}&= board.name
+	%p
+		%label
+			Level:
+			%select#level.required{name:'level_id',size:5}

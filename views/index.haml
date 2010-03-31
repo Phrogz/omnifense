@@ -1,45 +1,54 @@
-%form{ action:'go', method:'post' }
-				
-	%h2 Your Games
-	.section
-		- if @ogames.empty? && @dgames.empty?
-			%p.ancillary (no active games)
-		- else
-			%select{size:10}
-				- unless @ogames.empty?
-					%optgroup{label:'On Offense'}
-						- @ogames.each do |game|
-							%option{value:game.pk}
-								&= game.name
+%h2 My Games In Progress
+%form.section.autovalidate{ action:'go', method:'post' }
+	- if @my_games_on_offense.empty? && @my_games_on_defense.empty?
+		%p.ancillary (no active games)
+	- else
+		%select.required.long{size:10,requiredmessage:'Pick a game, then you can continue.'}
+			- unless @my_games_on_offense.empty?
+				%optgroup{label:'On Offense'}
+					- @my_games_on_offense.each do |game|
+						%option{value:game.pk}
+							&= game.level.name
+							vs.
+							&= game.defense.nick
+			- unless @my_games_on_defense.empty?
+				%optgroup{label:'On Defense'}
+					- @my_games_on_defense.each do |game|
+						%option{value:game.pk}
+							&= game.name
+							vs.
+							&= game.offense.nick
+		%button Continue the Fight
+		
+%h2 Open Games
+%form.section.autovalidate{ action:'join', method:'post' }
+	- if @games_with_open_o.empty? && @games_with_open_d.empty?
+		%p.ancillary (no open games)
+	- else
+		- max_size = @games_with_open_o.length+@games_with_open_d.length+2
+		%select.required.long{name:'game_id',size:[max_size,10].min,requiredmessage:'Easy now. First select a game to join.'}
+			- unless @games_with_open_o.empty?
+				%optgroup{label:'I Would Play Offense'}
+					- @games_with_open_o.each do |game|
+						%option{value:game.pk, disabled:game.defense==@me && :disabled}
+							&= game.level.name
+							- if game.defense==@me
+								(my game)
+							- else
 								vs.
 								&= game.defense.nick
-				- unless @dgames.empty?
-					%optgroup{label:'On Defense'}
-						- @dgames.each do |game|
-							%option{value:game.pk}
-								&= game.name
+			- unless @games_with_open_d.empty?
+				%optgroup{label:'I Would Play Defense'}
+					- @games_with_open_d.each do |game|
+						%option{value:game.pk, disabled:game.offense==@me && :disabled}
+							&= game.level.name
+							- if game.offense==@me
+								(my game)
+							- else
 								vs.
 								&= game.offense.nick
-		%button{name:'new'} Start a New Game
-		
-		%h2 Open Games
-		.section
-			- if @open_o.empty? && @open_d.empty?
-				%p.ancillary (no open games)
-			- else
-				%select{size:10}
-					- unless @open_o.empty?
-						%optgroup{label:'You Play Offense'}
-							- @open_o.each do |game|
-								%option{value:game.pk}
-									&= game.name
-									vs.
-									&= game.defense.nick
-					- unless @open_d.empty?
-						%optgroup{label:'You Play Defense'}
-							- @ogames.each do |game|
-								%option{value:game.pk}
-									&= game.name
-									vs.
-									&= game.offense.nick
-		
+	%button Join the Fun
+	
+%form{ action:'new_game', method:'get' }
+	%button Start a New Game
+

@@ -1,0 +1,7 @@
+body { margin:2em }
+p { margin:0; margin-bottom:0.5em;}
+p:last-child { margin-bottom:0 }
+.section { border:1px solid #eee; margin-bottom:1.5em; padding:0.5em }
+h2 { margin:0; margin-top:1.5em; font-size:100%; background:#eee; padding:0.2em 0.5em; font-family:Tahoma, Verdana, sans-serif; }
+select.long { display:block ;}
+.ancillary { color:#666; font-size:85% }

@@ -2,6 +2,7 @@ class Game < Sequel::Model
 	many_to_one :level, eager: [:waves]
 	many_to_one :offense,       class: :User, key: :offense_user_id
 	many_to_one :defense,       class: :User, key: :defense_user_id
+	many_to_one :creator,       class: :User, key: :created_by
 	one_to_many :offense_moves, class: :GameOffenseMove, order: :wave_number, eager: [:paths]
 	one_to_many :defense_moves, class: :GameDefenseMove, order: :wave_number
 	def to_offense_json

@@ -7,16 +7,20 @@ hole = TowerType.create  id:1, name:"hole"
 
 gk = User.create email:'!@phrogz.net', nick:'Phrogz', passhash:'no', cookey:'abcdefg'
 hh = User.create email:'hhausman@gmail.com', nick:'hrrld', passhash:'in'
-board = Board.create name:'board', background:'board-back.png', overlay:'board-over.png'
+board = Board.create name:'Standard', background:'standard-back.png', overlay:'standard-over.png', thumbnail:'standard-thumb.png'
+board.creator = gk
+board.save
 0.step(22,2){ |i| board.add_ignore m:i, n:15 }
 
-level = board.add_level name:'level', lives:5
+level = board.add_level name:'Ole Blanky', lives:5, thumbnail:'standard-blanky-thumb.png'
 level.add_start  m:-1, n:15
 level.add_finish m:23, n:2
 level.add_wave wave_number:0, runners:2, towers:3, duration:10
 level.add_wave wave_number:1, runners:1, towers:4, duration:10
 level.add_wave wave_number:2, runners:4, towers:3, duration:10
 level.add_wave wave_number:3, runners:1, towers:4
+level.creator = gk
+level.save
 
 game = level.add_game( name:"Test", offense_key:"letmein", defense_key:"stopit" )
 game.offense = gk

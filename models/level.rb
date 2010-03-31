@@ -5,6 +5,7 @@ class Level < Sequel::Model
 	one_to_many :features, class: :LevelFeature
 	one_to_many :waves,    class: :LevelWave, order: :wave_number
 	one_to_many :games
+	many_to_one :creator,  class: :User, key: :created_by
 end
 
 class LevelStart < Sequel::Model
