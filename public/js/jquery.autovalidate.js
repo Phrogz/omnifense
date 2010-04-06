@@ -1,5 +1,5 @@
 //################################################
-//# jQuery AutoValidate v3.0.2; 2009-FEB-27
+//# jQuery AutoValidate v3.0.3; 2010-MAR-31
 //# 
 //#  Copyright (c) 2008 Gavin Kistner (phrogz.net)
 //#  Licensed under the MIT (MIT-LICENSE.txt)
@@ -35,6 +35,7 @@ v 2.0		 20080918 -- rewrite; validation now occurs onchange/click of each elemen
 v 3.0    20081011 -- further rewrite to use jQuery; changed API slightly (some attributes moved to classes)
                      removed some features (required radio buttons, single-error messages)
 v 3.0.2  20090227 -- Hack to keep from throwing errors for IE8.
+v 3.0.3  20100331 -- Allow it to actually submit when no errors were in place. Quelle horreur!
 *************************************************************/
 jQuery(function($){
 	var theFormCriteria		 = 'form.autovalidate';
@@ -216,12 +217,11 @@ jQuery(function($){
 				var theFirstField = theValidationErrors[0].el;
 				try{ theFirstField.focus();	 } catch(e){};
 				try{ theFirstField.select(); } catch(e){};
-				inEvent.cancelFurtherSubmits=true;
 				inEvent.preventDefault();
-				inEvent.stopPropagation();
+				inEvent.stopImmediatePropagation();
 				return false;
 			}
-			return false
+			return true;
 		});
 	};
 

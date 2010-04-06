@@ -2,6 +2,19 @@ require 'sequel'
 $: << '..'
 require 'models/init'
 
+RunnerType.unrestrict_primary_key
+TowerType.unrestrict_primary_key
+GameDefenseMove.unrestrict_primary_key
+GameOffenseMove.unrestrict_primary_key
+GameOffensePath.unrestrict_primary_key
+Board.unrestrict_primary_key
+BoardIgnore.unrestrict_primary_key
+Level.unrestrict_primary_key
+LevelStart.unrestrict_primary_key
+LevelFinish.unrestrict_primary_key
+LevelFeature.unrestrict_primary_key
+LevelWave.unrestrict_primary_key
+
 noob = RunnerType.create id:1, name:"noob"
 hole = TowerType.create  id:1, name:"hole"
 
@@ -26,9 +39,6 @@ game = level.add_game( name:"Test", offense_key:"letmein", defense_key:"stopit" 
 game.offense = gk
 game.save
 
-GameDefenseMove.unrestrict_primary_key
-GameOffenseMove.unrestrict_primary_key
-GameOffensePath.unrestrict_primary_key
 [
 	[
 		[[-1,5],[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0],[10,0],[10,1],[10,2],[10,3],[10,4],[10,5],[11,5],[12,4],[13,4],[14,3],[14,2],[14,1],[15,1],[15,0],[16,0],[17,0],[18,0],[19,0],[20,0],[21,0],[22,0],[22,1],[23,2]],
@@ -54,6 +64,3 @@ GameOffensePath.unrestrict_primary_key
 		game.add_defense_move wave_number:wave, m:m, n:n, tower_type_id:hole.id
 	}
 }
-GameDefenseMove.restrict_primary_key
-GameOffenseMove.restrict_primary_key
-GameOffensePath.restrict_primary_key

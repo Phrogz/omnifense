@@ -24,7 +24,7 @@ Class.new Sequel::Migration do
 			foreign_key :board_id, :boards, null: false
 			Integer     :m, null: false
 			Integer     :n, null: false
-			primary_key :board_id, :m, :n
+			primary_key [:board_id, :m, :n]
 		end
 		create_table :levels do
 			primary_key :id
@@ -39,20 +39,20 @@ Class.new Sequel::Migration do
 			foreign_key :level_id, :levels, null: false
 			Integer     :m, null: false
 			Integer     :n, null: false
-			primary_key :level_id, :m, :n
+			primary_key [:level_id, :m, :n]
 		end
 		create_table :level_finishes do
 			foreign_key :level_id, :levels, null: false
 			Integer     :m, null: false
 			Integer     :n, null: false
-			primary_key :level_id, :m, :n
+			primary_key [:level_id, :m, :n]
 		end
 		create_table :level_features do
 			foreign_key :level_id, :levels, null: false
 			Integer     :m, null: false
 			Integer     :n, null: false
 			foreign_key :feature_type_id, :feature_types, null: false
-			primary_key :level_id, :m, :n
+			primary_key [:level_id, :m, :n]
 		end
 		create_table :level_waves do
 			foreign_key :level_id, :levels, null: false
@@ -60,7 +60,7 @@ Class.new Sequel::Migration do
 			Integer     :runners,     null: false
 			Integer     :towers,      null: false
 			Integer     :duration
-			primary_key :level_id, :wave_number
+			primary_key [:level_id, :wave_number]
 		end
 		create_table :users do
 			primary_key :id
@@ -92,7 +92,7 @@ Class.new Sequel::Migration do
 			Integer     :step_number, null: false
 			Integer     :m, null: false
 			Integer     :n, null: false
-			primary_key :move_id, :step_number
+			primary_key [:move_id, :step_number]
 		end
 		create_table :game_defense_moves do
 			foreign_key :game_id, :games, null: false
@@ -101,22 +101,22 @@ Class.new Sequel::Migration do
 			Integer     :n, null: false
 			foreign_key :tower_type_id, :tower_types, null: false
 			DateTime    :created_on, default: "current_timestamp".lit
-			primary_key :game_id, :wave_number, :m, :n
+			primary_key [:game_id, :wave_number, :m, :n]
 		end
 		create_table :runner_types do
 			Integer     :id
 			String      :name
-			primary_key :id
+			primary_key [:id]
 		end
 		create_table :tower_types do
 			Integer     :id
 			String      :name
-			primary_key :id
+			primary_key [:id]
 		end
 		create_table :feature_types do
 			Integer     :id
 			String      :name
-			primary_key :id
+			primary_key [:id]
 		end
 	end
 	def down

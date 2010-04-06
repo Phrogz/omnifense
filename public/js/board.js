@@ -11,6 +11,10 @@ function Board(maxM,maxN,canvas,imgs){
 	for (var m=0;m<=this.maxM;++m) this.tiles[m] = [];
 };
 
+Board.fromData = function(o){
+	
+};
+
 Board.prototype.startAt = function(a,b){
 	this.start = this.placeTile(new Cell(a,b),'start',true);
 };

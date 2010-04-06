@@ -13,11 +13,25 @@
 %form.section.autovalidate{action:'new_game',method:'post'}
 	%p
 		%label
-			Board:
-			%select#board.required{name:'board_id',size:[@boards.length,2].max}
+			%span.label Board:
+			%select#board{size:[@boards.length,2].max}
 				- @boards.each do |board|
-					%option{value:board.pk}&= board.name
+					%option{value:board.pk}
+						&= board.name
+						(#{board.levels.length} level#{:s unless board.levels.length==1})
 	%p
 		%label
-			Level:
-			%select#level.required{name:'level_id',size:5}
+			%span.label Level:
+			%select#level.required{name:'level_id',size:5,requiredmessage:'Pick a Board and Level to play.'}
+
+	%p
+		- rnd = rand(2)
+		%label
+			%input{type:'radio',name:'offense',value:'true',checked:rnd==0 }
+			I will play offense.
+		%label
+			%input{type:'radio',name:'offense',value:'false',checked:rnd==1 }
+			I will play defense.
+
+	%p
+		%button{type:'submit'} Put it Out There!

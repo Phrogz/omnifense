@@ -7,7 +7,7 @@ $(function(){
 			var lv  = levels[i];
 			var val = lv.id;
 			var txt = lv.name+' ('+lv.lives+' '+( lv.lives==1 ? 'life' : 'lives' )+')'
-			lvSelect.append( $('<option value="'+val+'">'+txt+'</option>') );
+			lvSelect.append( new Option(txt,val) );
 		}
 	});
 });

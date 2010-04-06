@@ -3,6 +3,8 @@ require 'haml'
 require 'sequel'
 require 'models/init'
 require 'lib/tojs'
+require 'lib/hash_slice'
+require 'routes'
 
 set :haml, { :format => :html4 }
 set :environment, :development
@@ -37,31 +39,11 @@ helpers do
 			redirect '/'
 		end
 	end
+	def logout
+		session[:user] = nil
+	end
 end
 
-get '/' do
-	login_required
-	@id     = :index
-	@title  = "Welcome to"
-	@me     = User[session[:user]]
-	@my_games_on_offense = @me.games(:offense)
-	@my_games_on_defense = @me.games(:offense)
-	@games_with_open_o   = Game.filter( offense_user_id:nil ).eager(:defense).all
-	@games_with_open_d   = Game.filter( defense_user_id:nil ).eager(:offense).all
-	haml :index
-end
-
-get '/login' do
-	@users = User.all
-	haml :login
-end
-
-post '/login' do
-	check_login
-end
-
-get '/new_game' do
-	@js = 'new_game.js'
-	@boards = Board.eager(:levels).all
-	haml :new_game
+before do
+	@me = User[session[:user]] if session[:user]
 end

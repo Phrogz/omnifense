@@ -1,0 +1,4 @@
+:javascript
+	$board = Board.fromData(#{@game.level.board.to_js});
+	$level = Level.fromData(#{@game.level.to_js});
+	$game  = Game.fromData(#{@game.to_js(@side)});

@@ -1,9 +1,10 @@
 %h2 My Games In Progress
-%form.section.autovalidate{ action:'go', method:'post' }
+%form.section.autovalidate{ action:'play', method:'get' }
 	- if @my_games_on_offense.empty? && @my_games_on_defense.empty?
 		%p.ancillary (no active games)
 	- else
-		%select.required.long{size:10,requiredmessage:'Pick a game, then you can continue.'}
+		- max_size = @my_games_on_offense.length+@my_games_on_defense.length+2
+		%select.required.long{name:'game_id',size:[max_size,10].min,requiredmessage:'Pick a game, then you can continue.'}
 			- unless @my_games_on_offense.empty?
 				%optgroup{label:'On Offense'}
 					- @my_games_on_offense.each do |game|

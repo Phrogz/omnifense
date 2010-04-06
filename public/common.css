@@ -5,3 +5,13 @@ p:last-child { margin-bottom:0 }
 h2 { margin:0; margin-top:1.5em; font-size:100%; background:#eee; padding:0.2em 0.5em; font-family:Tahoma, Verdana, sans-serif; }
 select.long { display:block ;}
 .ancillary { color:#666; font-size:85% }
+
+#content { margin-top:2em;}
+#nav { position:absolute; top:0; right:2em; text-align:right; padding:0.2em 0 }
+#nav * { font-size:75%; font-family:sans-serif; }
+
+body#new_game label { display:block; }
+body#new_game label .label { display:inline-block; width:3em; margin:0; padding:0; }
+body#new_game select { width:15em; vertical-align:top; margin:0; }
+body#new_game input[type=radio],
+body#new_game button  { margin-left:3em }

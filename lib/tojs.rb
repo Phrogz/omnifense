@@ -20,3 +20,8 @@ class Hash
 		}}"
 	end
 end
+class NilClass
+	def to_js
+		"null"
+	end
+end
